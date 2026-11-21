@@ -6,22 +6,24 @@
 <meta name="theme-color" content="#0a3d8f">
 <title>Prediksi Liga Besar</title>
 <style>
-:root{--navy:#0a2a66;--ink:#16171a;--mu:#8a93a3;--ln:#e8ecf3;--sf:#f4f6fa;--gr:#18a35a;--am:#f0a62b;--rd:#e5483b;--dr:#a8b0bd;color-scheme:light}
+:root{--bg:#fff;--navy:#0a2a66;--ink:#16171a;--mu:#8a93a3;--ln:#e8ecf3;--sf:#f4f6fa;--gr:#18a35a;--am:#f0a62b;--rd:#e5483b;--dr:#a8b0bd;color-scheme:light}
+html[data-theme="dark"]{--bg:#0c1424;--navy:#8dbcff;--ink:#eef2f8;--mu:#8d97a8;--ln:#263248;--sf:#18233a;--dr:#4b5873;color-scheme:dark}
+@media (prefers-color-scheme:dark){html:not([data-theme="light"]){--bg:#0c1424;--navy:#8dbcff;--ink:#eef2f8;--mu:#8d97a8;--ln:#263248;--sf:#18233a;--dr:#4b5873;color-scheme:dark}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:linear-gradient(160deg,#1b5cae,#4aa3e0 55%,#2a6fc2) fixed;font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);font-variant-numeric:tabular-nums}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,[tabindex]:focus-visible,input:focus-visible{outline:2px solid #2a7be0;outline-offset:2px}
 svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.app{max-width:460px;min-height:100dvh;margin:0 auto;background:#fff;padding-bottom:100px;overflow-x:hidden}
+.app{max-width:460px;min-height:100dvh;margin:0 auto;background:var(--bg);padding-bottom:100px;overflow-x:hidden}
 @media (min-width:520px){.app{margin:16px auto;min-height:calc(100dvh - 32px);border-radius:32px;box-shadow:0 24px 60px rgba(0,20,60,.35)}}
 .pad{padding:0 18px}
 .top{padding:calc(20px + env(safe-area-inset-top,0px)) 18px 4px;display:flex;justify-content:space-between;align-items:center}
 .top h1{margin:0;font-size:24px;line-height:1.15;font-weight:800}
 .top p{margin:2px 0 0;color:var(--mu);font-size:14px}
 .av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0a3d8f,#4aa3e0);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
-.sb{display:flex;align-items:center;gap:8px;margin:16px 18px 6px;border:1.5px solid var(--ln);border-radius:16px;padding:0 6px 0 14px;background:#fff;box-shadow:0 2px 10px rgba(10,42,102,.05)}
+.sb{display:flex;align-items:center;gap:8px;margin:16px 18px 6px;border:1.5px solid var(--ln);border-radius:16px;padding:0 6px 0 14px;background:var(--bg);box-shadow:0 2px 10px rgba(10,42,102,.05)}
 .sb svg{color:var(--mu);flex:none}
-.sb input{flex:1;min-width:0;border:0;background:none;font:inherit;padding:14px 4px;outline:none}
+.sb input{color:var(--ink);flex:1;min-width:0;border:0;background:none;font:inherit;padding:14px 4px;outline:none}
 .fb{width:40px;height:40px;border:0;border-left:1px solid var(--ln);background:none;color:var(--navy);border-radius:0;display:flex;align-items:center;justify-content:center}
 .st{display:flex;justify-content:space-between;align-items:center;margin:20px 18px 10px}
 .st h2{margin:0;font-size:18px;font-weight:700}
@@ -29,7 +31,7 @@ svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke
 .rw{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:4px 18px 10px}
 .rw::-webkit-scrollbar{display:none}
 .chip{flex:none;min-height:42px;padding:0 20px;border:0;border-radius:99px;background:transparent;color:#b4bbc7;font-weight:600}
-.chip[aria-pressed="true"]{background:var(--ink);color:#fff;box-shadow:0 8px 16px rgba(0,0,0,.22)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);box-shadow:0 8px 16px rgba(0,0,0,.22)}
 .car{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:6px 18px 22px}
 .car::-webkit-scrollbar{display:none}
 .pc{flex:none;width:236px;height:310px;border-radius:26px;position:relative;overflow:hidden;scroll-snap-align:start;color:#fff;box-shadow:0 14px 26px rgba(10,42,102,.28);display:flex;flex-direction:column;justify-content:flex-end;padding:12px}
@@ -44,7 +46,7 @@ svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke
 .gl b{display:block;font-size:15px;line-height:1.25}
 .gl span{font-size:12.5px;opacity:.9}
 .lst{padding:0 18px}
-.row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:#fff;border-bottom:1px solid var(--ln);padding:13px 0}
+.row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:var(--bg);border-bottom:1px solid var(--ln);padding:13px 0}
 .row .tx{flex:1;min-width:0}
 .row b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row small{color:var(--mu);font-size:12.5px}
@@ -54,15 +56,15 @@ svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke
 .day small{margin-left:8px;color:var(--gr);font-weight:700}
 .emp{text-align:center;color:var(--mu);padding:36px 24px}
 .emp button{margin-top:14px}
-.btn{border:0;border-radius:18px;background:var(--ink);color:#fff;font-weight:700;padding:16px 20px;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 10px 20px rgba(0,0,0,.2)}
+.btn{border:0;border-radius:18px;background:var(--ink);color:var(--bg);font-weight:700;padding:16px 20px;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 10px 20px rgba(0,0,0,.2)}
 .btn.lt{background:var(--sf);color:var(--ink);box-shadow:none}
-.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(100%,460px);background:#fff;border-top:1px solid var(--ln);display:flex;justify-content:space-around;padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));z-index:20}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(100%,460px);background:var(--bg);border-top:1px solid var(--ln);display:flex;justify-content:space-around;padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));z-index:20}
 @media (min-width:520px){.nav{border-radius:0 0 32px 32px;bottom:16px}}
-.nb{position:relative;border:0;background:none;padding:6px 14px;min-width:68px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#a2abba;font-size:11.5px;font-weight:600}
+.nb{position:relative;border:0;background:none;padding:6px 8px;min-width:58px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#a2abba;font-size:11.5px;font-weight:600}
 .nb.on{color:var(--navy)}
 .nb.on::after{content:"";width:5px;height:5px;border-radius:50%;background:var(--rd)}
 .bg{position:absolute;top:0;right:12px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--rd);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
-.ov{position:fixed;top:0;bottom:0;left:50%;width:min(100%,460px);transform:translateX(-50%);background:#fff;z-index:40;overflow-y:auto;overscroll-behavior:contain}
+.ov{position:fixed;top:0;bottom:0;left:50%;width:min(100%,460px);transform:translateX(-50%);background:var(--bg);z-index:40;overflow-y:auto;overscroll-behavior:contain}
 .ov-in{padding-bottom:110px}
 .hero{position:relative;height:300px;margin:calc(10px + env(safe-area-inset-top,0px)) 14px 0;border-radius:28px;overflow:hidden;color:#fff;box-shadow:0 14px 26px rgba(10,42,102,.25)}
 .hero .big{top:62px;font-size:64px}
@@ -72,18 +74,18 @@ svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke
 .tabs button{border:0;background:none;padding:6px 0;color:var(--mu);border-bottom:3px solid transparent}
 .tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--ink)}
 .oc3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 18px 14px}
-.oc{min-height:62px;border:1.5px solid var(--ln);border-radius:16px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;padding:4px}
+.oc{min-height:62px;border:1.5px solid var(--ln);border-radius:16px;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;padding:4px}
 .oc span{font-size:12px;color:var(--mu);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .oc b{font-size:20px}
 .oc.pr{border-color:var(--navy)}
-.oc[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
-.oc[aria-pressed="true"] span{color:#cfe0ff}
+.oc[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:var(--bg)}
+.oc[aria-pressed="true"] span{color:var(--bg);opacity:.75}
 .sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 18px 14px}
 .sc{display:flex;align-items:center;gap:10px;background:var(--sf);border-radius:14px;padding:11px 12px;font-size:12.5px;color:var(--mu)}
 .sc b{display:block;font-size:17px;color:var(--ink)}
 .txt{margin:0 18px 12px;color:#667085;font-size:14.5px}
 .why{margin:0 18px;padding-left:20px;color:#667085;font-size:14px}
-.cta{position:sticky;bottom:0;padding:14px 18px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,#fff 30%)}
+.cta{position:sticky;bottom:0;padding:14px 18px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--bg) 30%)}
 .hm{display:grid;grid-template-columns:auto repeat(5,1fr);gap:4px;margin:0 18px 6px;font-size:12px;text-align:center}
 .hm i{font-style:normal;color:var(--mu);align-self:center;padding:2px 4px}
 .hm div{border-radius:8px;padding:9px 0;font-weight:700;color:var(--ink)}
@@ -101,22 +103,28 @@ svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke
 .acts .btn{padding:14px 10px;font-size:14px}
 .sim{margin:0 18px 14px;padding:14px;border-radius:18px;background:var(--sf)}
 .sim h3{margin:0 0 10px;font-size:15px}
-.br{display:grid;grid-template-columns:70px 1fr 44px;gap:8px;align-items:center;font-size:13px;margin:6px 0}
-.br div:nth-child(2){height:12px;background:#fff;border-radius:99px;overflow:hidden}
+.br{display:grid;grid-template-columns:104px 1fr 48px;gap:8px;align-items:center;font-size:13px;margin:6px 0}
+.br div:nth-child(2){height:12px;background:var(--bg);border-radius:99px;overflow:hidden}
 .br div:nth-child(2) div{height:100%;background:var(--dr);border-radius:99px}
 .br.all div:nth-child(2) div{background:var(--gr)}
 .br span:last-child{text-align:right;font-weight:700}
-.xr{flex:none;width:38px;height:38px;border:1px solid var(--ln);border-radius:50%;background:#fff;font-size:20px;line-height:1}
+.xr{flex:none;width:38px;height:38px;border:1px solid var(--ln);border-radius:50%;background:var(--bg);font-size:20px;line-height:1}
 .sh{position:fixed;inset:0;z-index:60;background:rgba(10,20,40,.45);display:flex;align-items:flex-end;justify-content:center}
-.shp{width:min(100%,460px);background:#fff;border-radius:26px 26px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px))}
+.shp{width:min(100%,460px);background:var(--bg);border-radius:26px 26px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px))}
 .shp h3{margin:0 0 12px}
 .shp .rw{flex-wrap:wrap;padding:0 0 12px}
 .shp .chip{background:var(--sf);color:var(--ink)}
-.shp .chip[aria-pressed="true"]{background:var(--ink);color:#fff}
+.shp .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 .spl{position:fixed;inset:0;z-index:100;background:linear-gradient(180deg,#0a4fa8,#021a46);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;transition:opacity .5s}
 .spl h1{font:italic 700 44px Georgia,serif;margin:0 0 10px}
 .spl p{margin:0;opacity:.85;max-width:260px}
 .spl.out{opacity:0;pointer-events:none}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:14px;font-weight:600;z-index:200;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+.rc{margin:0 18px 12px;padding:14px;border-radius:18px;background:var(--sf)}
+.rc small{display:block;color:var(--mu);font-size:12.5px;margin-bottom:2px}
+.rc b{font-size:17px}
+.rc .nt{font-size:13px;color:var(--mu);margin-top:2px}
 .foot{margin:18px;font-size:12px;color:var(--mu)}
 @media (prefers-reduced-motion:no-preference){.ov-in{animation:up .28s ease-out}@keyframes up{from{opacity:0;transform:translateY(24px)}}.chip,.oc{transition:background .15s,color .15s}}
 </style>
@@ -127,18 +135,19 @@ svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke
 <nav class="nav" id="nav" aria-label="Menu utama"></nav>
 <div class="ov" id="ov" hidden></div>
 <div id="shh"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const D=__DATA__,UPD="__UPDATED__";
+const D=__DATA__,ACC=__ACC__,UPD="__UPDATED__";
 const $=s=>document.querySelector(s);
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
-const IC={home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',heart:'<path d="M12 21s-7-4.6-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.4-9.5 9-9.5 9z"/>',tick:'<path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4z"/><path d="M14 7v10" stroke-dasharray="2 2"/>',back:'<path d="M15 5l-7 7 7 7"/>',search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',filt:'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',ball:'<circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 5h-5L8 10z"/>',goal:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/>',up:'<path d="M5 17l5-5 4 4 5-8"/>'};
+const IC={home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',heart:'<path d="M12 21s-7-4.6-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.4-9.5 9-9.5 9z"/>',tick:'<path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4z"/><path d="M14 7v10" stroke-dasharray="2 2"/>',back:'<path d="M15 5l-7 7 7 7"/>',search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',filt:'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',ball:'<circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 5h-5L8 10z"/>',goal:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/>',up:'<path d="M5 17l5-5 4 4 5-8"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',share:'<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/>'};
 const ic=n=>{const s=document.createElementNS("http://www.w3.org/2000/svg","svg");s.setAttribute("viewBox","0 0 24 24");s.innerHTML=IC[n];return s};
 const pc=x=>Math.round(x*100);
 const WIB={timeZone:"Asia/Jakarta"};
 const dk=d=>d.toLocaleDateString("en-CA",WIB);
 const todayK=dk(new Date()),tomK=dk(new Date(Date.now()+864e5));
-const GR={"Premier League":["#3d1a78","#9650e0"],"La Liga":["#b3261e","#f59a4a"],"Serie A":["#0b4fa8","#3aa0e8"],"Bundesliga":["#8c1d1d","#e8603f"],"Ligue 1":["#0c5a4a","#35bd92"]};
+const GR={"Premier League":["#3d1a78","#9650e0"],"La Liga":["#b3261e","#f59a4a"],"Serie A":["#0b4fa8","#3aa0e8"],"Bundesliga":["#8c1d1d","#e8603f"],"Ligue 1":["#0c5a4a","#35bd92"],"Liga Champions":["#0b1f5c","#3a6be8"]};
 const BY={};
 D.forEach((m,i)=>{m.key=m.t+m.h+m.a;BY[m.key]=m;m.d=new Date(m.t);m.dk=dk(m.d);
   const o=[["h",m.ph],["d",m.pd],["a",m.pa]].sort((x,y)=>y[1]-x[1])[0];m.best=o[0];m.mx=o[1]});
@@ -151,6 +160,18 @@ let favs=new Set();try{favs=new Set(JSON.parse(localStorage.getItem("fav")||"[]"
 const saveF=()=>{try{localStorage.setItem("fav",JSON.stringify([...favs]))}catch(e){}};
 let tab="home",det=null,dtab="r",q="",hc="yakin",lg=null,pri=false,note="",simR=null;
 const picks=new Map();
+let theme="auto";try{theme=localStorage.getItem("theme")||"auto"}catch(e){}
+const TL={auto:"Auto",light:"Terang",dark:"Gelap"};
+function applyTheme(){if(theme==="auto")document.documentElement.removeAttribute("data-theme");else document.documentElement.setAttribute("data-theme",theme);try{localStorage.setItem("theme",theme)}catch(e){}}
+function themeBtn(){const b=el("button","av",TL[theme]);b.style.border="0";b.style.fontSize="11px";b.setAttribute("aria-label","Ganti tema, sekarang "+TL[theme]);
+  b.onclick=()=>{theme=theme==="auto"?"dark":theme==="dark"?"light":"auto";applyTheme();b.textContent=TL[theme]};return b}
+applyTheme();
+function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");setTimeout(()=>e.classList.remove("on"),2000)}
+function share(m){const t=m.h+" vs "+m.a+" ("+m.lg+")\nPrediksi: "+nm(m,m.best)+" "+pc(m.mx)+"%\nPeluang: "+m.h+" "+pc(m.ph)+"%, seri "+pc(m.pd)+"%, "+m.a+" "+pc(m.pa)+"%";
+  const url=location.href.split("#")[0];
+  if(navigator.share){navigator.share({title:"Prediksi "+m.h+" vs "+m.a,text:t,url}).catch(()=>{})}
+  else if(navigator.clipboard){navigator.clipboard.writeText(t+"\n"+url).then(()=>toast("Teks prediksi disalin"),()=>toast("Gagal menyalin"))}
+  else toast("Peramban tidak mendukung bagikan")}
 
 const base=()=>D.filter(m=>(!lg||m.lg===lg)&&(!pri||m.label==="Prioritas")&&(!q||(m.h+" "+m.a).toLowerCase().includes(q.toLowerCase())));
 function heart(m,cls){const b=el("button",cls+(favs.has(m.key)?" on":""));b.appendChild(ic("heart"));b.setAttribute("aria-label","Simpan ke favorit");
@@ -193,7 +214,7 @@ function refresh(){const d=$("#dyn");if(d)d.replaceChildren(dyn())}
 function hdr(h,s){const t=el("div","top"),w=el("div");w.append(el("h1",0,h),el("p",0,s));t.append(w);return t}
 function view(){const v=$("#view");v.replaceChildren();
   if(tab==="home"){
-    const t=hdr("Halo, Sobat Bola","Prediksi laga besar Eropa");t.appendChild(el("div","av","PB"));v.append(t,searchBar());
+    const t=hdr("Halo, Sobat Bola","Prediksi laga besar Eropa");t.appendChild(themeBtn());v.append(t,searchBar());
     const s=el("div","st");const sb=el("button",0,"Lihat semua");sb.onclick=()=>{tab="cal";render()};s.append(el("h2",0,"Laga populer"),sb);v.appendChild(s);
     const r=el("div","rw");[["yakin","Paling yakin"],["hari","Hari ini"],["besok","Besok"],["rawan","Rawan kejutan"]].forEach(([k,l])=>{
       const b=el("button","chip",l);b.setAttribute("aria-pressed",hc===k);b.onclick=()=>{hc=k;render()};r.appendChild(b)});
@@ -204,6 +225,7 @@ function view(){const v=$("#view");v.replaceChildren();
     v.appendChild(hdr("Favorit","Laga yang Anda simpan"));
     const L=D.filter(m=>favs.has(m.key)).sort((a,b)=>a.d-b.d);
     if(L.length)v.appendChild(days(L));else v.appendChild(empty("Belum ada favorit. Ketuk ikon hati pada laga yang ingin Anda pantau.","Cari laga",()=>{tab="home";render()}));
+  }else if(tab==="acc"){accView(v)
   }else parlayView(v);
   v.appendChild(el("p","foot","Diperbarui "+UPD+". Peluang adalah perkiraan statistik, bukan jaminan hasil. Taruhan ilegal di Indonesia dan berisiko kerugian."));
   if($("#dyn"))refresh();
@@ -238,8 +260,26 @@ function parlayView(v){v.appendChild(hdr("Parlay","Racik dan uji kombinasi Anda"
       const bar=el("div"),fill=el("div");fill.style.width=pcn+"%";bar.appendChild(fill);r.append(el("span",0,i===simR.n?"Semua benar":i+" benar"),bar,el("span",0,pcn.toFixed(1)+"%"));w.appendChild(r)}
     w.appendChild(el("p","cap","Simulasi mengandaikan tiap laga berdiri sendiri. Hasilnya menggambarkan seberapa sering kombinasi ini gagal."));v.appendChild(w)}
   const c=el("button","btn lt","Kosongkan parlay");c.style.margin="0 18px";c.style.width="calc(100% - 36px)";c.onclick=()=>{picks.clear();simR=null;note="";render()};v.appendChild(c)}
+function accView(v){v.appendChild(hdr("Akurasi","Prediksi dicocokkan dengan hasil asli"));
+  if(!ACC||!ACC.n){v.appendChild(empty("Pelacak mulai merekam sejak update ini. Hasil laga yang sudah selesai akan muncul di sini setelah update berikutnya."));return}
+  const s=el("div","sum");s.append(el("span",0,"Tebakan hasil benar dari "+ACC.n+" laga"),el("b",0,pc(ACC.hit)+"%"));v.appendChild(s);
+  const br=ACC.brier,bs=ACC.base,bt=br<bs;
+  v.appendChild(el("div","vd "+(bt?"v-ok":"v-wr"),"Skor Brier "+br.toFixed(3)+" (acuan menebak rata 0,667; makin kecil makin baik). "+(bt?"Model lebih baik dari tebakan acak.":"Model belum mengalahkan tebakan acak.")));
+  if(ACC.n<30)v.appendChild(el("div","vd v-in","Sampel masih kecil ("+ACC.n+" laga). Angka baru stabil setelah puluhan laga."));
+  function bars(title,rows,cap){const w=el("div","sim");w.appendChild(el("h3",0,title));
+    rows.forEach(([l,x])=>{const r=el("div","br"),bar=el("div"),f=el("div");f.style.width=(x?x.hit*100:0)+"%";bar.appendChild(f);r.append(el("span",0,l),bar,el("span",0,x?pc(x.hit)+"%":"-"));w.appendChild(r)});
+    if(cap)w.appendChild(el("p","cap",cap));v.appendChild(w)}
+  bars("Ketepatan per label",["Prioritas","Pertimbangkan","Hindari"].map(k=>[k,ACC.by[k]]));
+  const K=[["hi","Yakin 65%+"],["mid","Yakin 50-65%"],["lo","Di bawah 50%"]];
+  bars("Apakah keyakinan model jujur?",K.map(([k,l])=>[l,ACC.bk[k]]),"Klaim rata-rata model: "+K.map(([k,l])=>ACC.bk[k]?l+" = "+pc(ACC.bk[k].avg)+"%":"").filter(Boolean).join(", ")+". Makin dekat dengan batang di atas, makin jujur.");
+  const h=el("div","st");h.appendChild(el("h2",0,"Hasil terakhir"));v.appendChild(h);
+  const box=el("div","lst");
+  ACC.recent.forEach(x=>{const r=el("div","row"),t=el("div","tx"),pk=x.pick==="h"?x.h+" menang":x.pick==="a"?x.a+" menang":"Seri";
+    t.append(el("b",0,x.h+" "+x.sc.replace("-"," - ")+" "+x.a),el("small",0,"Tebakan: "+pk));
+    r.append(t,el("span","pill "+(x.ok?"p-Prioritas":"p-Hindari"),x.ok?"Benar":"Salah"));box.appendChild(r)});
+  v.appendChild(box)}
 function nav(){const n=$("#nav");n.replaceChildren();
-  [["home","home","Beranda"],["cal","cal","Jadwal"],["fav","heart","Favorit"],["par","tick","Parlay"]].forEach(([k,i,l])=>{
+  [["home","home","Beranda"],["cal","cal","Jadwal"],["fav","heart","Favorit"],["acc","chart","Akurasi"],["par","tick","Parlay"]].forEach(([k,i,l])=>{
     const b=el("button","nb"+(tab===k?" on":""));b.append(ic(i),el("span",0,l));
     if(k==="par"&&picks.size)b.appendChild(el("span","bg",String(picks.size)));
     b.setAttribute("aria-label",l);b.onclick=()=>{det=null;tab=k;render();window.scrollTo(0,0)};n.appendChild(b)})}
@@ -249,12 +289,14 @@ function detail(){const o=$("#ov");if(!det){o.hidden=true;o.replaceChildren();re
   const w=el("div","ov-in"),h=el("div","hero pitch");h.style.background=`linear-gradient(165deg,${g[0]},${g[1]})`;
   const bk=el("button","ib");bk.appendChild(ic("back"));bk.style.left="12px";bk.setAttribute("aria-label","Kembali");bk.onclick=()=>{det=null;render()};
   const hh=heart(m,"ib");hh.style.right="12px";hh.style.position="absolute";
+  const shb=el("button","ib");shb.appendChild(ic("share"));shb.style.right="62px";shb.setAttribute("aria-label","Bagikan");shb.onclick=()=>share(m);
   const bg=el("div","big",pc(m.mx)+"%");bg.appendChild(el("small",0,nm(m,m.best)));
   const gl=el("div","gl"),l=el("div");l.append(el("b",0,m.h+" vs "+m.a),el("span",0,m.lg+", "+(tagDay(m)||dl(m))+", "+tm(m)+" WIB"));
-  gl.append(l,el("span","pill p-"+m.label,m.label));h.append(bk,hh,bg,gl);w.appendChild(h);
+  gl.append(l,el("span","pill p-"+m.label,m.label));h.append(bk,hh,shb,bg,gl);w.appendChild(h);
   const tb=el("div","tabs");tb.setAttribute("role","tablist");
-  [["r","Ringkasan"],["d","Detail"]].forEach(([k,t])=>{const b=el("button",0,t);b.setAttribute("role","tab");b.setAttribute("aria-selected",dtab===k);b.onclick=()=>{dtab=k;detail()};tb.appendChild(b)});w.appendChild(tb);
-  if(dtab==="r"){
+  [["r","Ringkasan"],["p","Pasar"],["d","Detail"]].forEach(([k,t])=>{const b=el("button",0,t);b.setAttribute("role","tab");b.setAttribute("aria-selected",dtab===k);b.onclick=()=>{dtab=k;detail()};tb.appendChild(b)});w.appendChild(tb);
+  if(dtab==="p"){pasar(w,m)}
+  else if(dtab==="r"){
     const g3=el("div","oc3");
     [["h",m.h],["d","Seri"],["a",m.a]].forEach(([k,lb])=>{const b=el("button","oc"+(m.best===k?" pr":""));b.append(el("span",0,lb),el("b",0,pc(pr(m,k))+"%"));
       b.setAttribute("aria-pressed",picks.get(m.key)===k);b.setAttribute("aria-label",nm(m,k)+" "+pc(pr(m,k))+" persen, pilih untuk parlay");
@@ -274,10 +316,33 @@ function detail(){const o=$("#ov");if(!det){o.hidden=true;o.replaceChildren();re
     w.appendChild(hm);w.appendChild(el("p","cap","Angka dalam persen. Semakin biru, semakin mungkin."));
     const fm=el("div","fm");[[m.h,m.fh],[m.a,m.fa]].forEach(([n,v])=>{const r=el("div","l");r.append(el("span",0,n),el("b",0,v+" dari 15 poin"));const t=el("div","t"),f=el("div");f.style.width=v/15*100+"%";t.appendChild(f);fm.append(r,t)});
     w.append(el("p","txt","Form 5 laga terakhir"),fm);
+    if(m.eh){const em=el("div","fm");[[m.h,m.eh],[m.a,m.ea]].forEach(([n,v])=>{const r=el("div","l");r.append(el("span",0,n),el("b",0,"Elo "+v));const t=el("div","t"),f=el("div");f.style.width=Math.max(5,Math.min(100,(v-1300)/4))+"%";t.appendChild(f);em.append(r,t)});w.append(el("p","txt","Rating Elo (kekuatan relatif tim musim ini)"),em)}
   }
   const ct=el("div","cta"),cb=el("button","btn");const has=picks.has(m.key);
   cb.textContent=has?"Hapus dari parlay":"Tambah ke parlay";
   cb.onclick=()=>{has?picks.delete(m.key):picks.set(m.key,m.best);simR=null;note="";nav();detail()};ct.appendChild(cb);w.appendChild(ct);o.appendChild(w);o.scrollTop=0}
+const fl=l=>(l>0?"+":"")+l;
+function pasar(w,m){
+  if(!m.ah){w.appendChild(el("p","txt","Data pasar belum tersedia untuk laga ini. Jalankan update lagi."));return}
+  const R=m.rec||{},tn=k=>k==="h"?m.h:m.a;
+  const a=el("div","rc");a.appendChild(el("small",0,"Rekomendasi handicap"));
+  if(R.ah){a.appendChild(el("b",0,tn(R.ah.side)+" "+fl(R.ah.line)+" ("+pc(R.ah.p)+")"));
+    a.appendChild(el("div","nt",R.ah.push>0.005?"Peluang tembus tanpa menghitung push. Peluang push "+pc(R.ah.push)+": taruhan dikembalikan.":"Peluang tembus berdasarkan model gol."))}
+  else{a.appendChild(el("b",0,"Tidak ada keunggulan jelas"));a.appendChild(el("div","nt","Tidak ada garis yang melewati 60% untuk tim unggulan."))}
+  w.appendChild(a);
+  const o=el("div","rc");o.appendChild(el("small",0,"Kecenderungan Over/Under"));
+  if(R.ou){o.appendChild(el("b",0,(R.ou.dir==="over"?"Over ":"Under ")+R.ou.line+" gol ("+pc(R.ou.p)+")"))}
+  else o.appendChild(el("b",0,"Tidak ada kecenderungan jelas"));
+  o.appendChild(el("div","nt","Perkiraan total gol "+m.etg.toFixed(1)));w.appendChild(o);
+  const k=el("div","rc");k.appendChild(el("small",0,"Total korner"));k.appendChild(el("b",0,"Belum tersedia"));
+  k.appendChild(el("div","nt","Sumber data gratis yang dipakai tidak menyertakan statistik korner, jadi angkanya tidak saya karang."));w.appendChild(k);
+  function bars(title,cap,rows){const b=el("div","sim");b.appendChild(el("h3",0,title));
+    rows.forEach(([l,p,t])=>{const r=el("div","br"),bar=el("div"),f=el("div");f.style.width=p*100+"%";bar.appendChild(f);r.append(el("span",0,l),bar,el("span",0,t||pc(p)+"%"));b.appendChild(r)});
+    if(cap)b.appendChild(el("p","cap",cap));w.appendChild(b)}
+  bars("Handicap untuk "+m.h,"Batang adalah peluang tembus tanpa menghitung push. Garis bulat (-1, 0, +1) bisa berakhir push dan taruhan kembali.",
+    m.ah.map(([L,wn,pu,ls])=>[fl(L),wn+ls>0?wn/(wn+ls):0]));
+  bars("Over / Under gol","Persentase adalah peluang Over. Under adalah sisanya.",m.ou.map(([ln,ov])=>["Over "+ln,ov]));
+  w.appendChild(el("p","txt","Ini kecenderungan statistik dari model gol, bukan nilai taruhan: tanpa odds, tidak bisa dipastikan apakah sebuah garis menguntungkan."))}
 function openM(m){det=m;dtab="r";detail()}
 function sheet(){const s=$("#shh");s.replaceChildren();const b=el("div","sh"),p=el("div","shp");
   p.appendChild(el("h3",0,"Filter"));const r=el("div","rw");
