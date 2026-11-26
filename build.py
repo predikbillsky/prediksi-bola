@@ -3,10 +3,13 @@ import os, sys, json, math, time, datetime as dt, requests
 KEY = os.environ.get("FD_API_KEY", "")
 BASE = "https://api.football-data.org/v4"
 LEAGUES = {"PL": "Premier League", "PD": "La Liga", "SA": "Serie A",
-           "BL1": "Bundesliga", "FL1": "Ligue 1", "CL": "Liga Champions"}
+           "BL1": "Bundesliga", "FL1": "Ligue 1", "CL": "Liga Champions",
+           "ELC": "Championship", "DED": "Eredivisie", "PPL": "Primeira Liga",
+           "BSA": "Brasileirão"}
 HIST = "history.json"
-HOME_ADV = 60      # keunggulan kandang dalam poin Elo
+HOME_ADV = 60      # keunggulan kandang (poin Elo)
 ELO_W = 0.4        # bobot Elo saat digabung dengan model gol
+CORNER_BASE = (5.4, 4.6)   # asumsi rata-rata korner kandang/tandang (heuristik, bukan data)
 _last = 0.0
 
 
@@ -36,7 +39,9 @@ def shrink(ratio, n, k=5):
 
 
 def grid(lh, la, n=10):
-    g = [[pois(i, lh) * pois(j, la) for j in range(n)] for i in range(n)]
+    pa = [pois(i, lh) for i in range(n)]
+    pb = [pois(j, la) for j in range(n)]
+    g = [[x * y for y in pb] for x in pa]
     t = sum(map(sum, g))
     return [[x / t for x in r] for r in g]
 
@@ -79,24 +84,65 @@ def cover(g, side, line):
     return w, pu, l
 
 
+# ---------- Model korner (heuristik buatan sendiri, tanpa data korner asli) ----------
+def nb_pmf(mu, vf, n=40):
+    """Distribusi binomial negatif dengan varians = vf * rata-rata (korner lebih melebar dari Poisson)."""
+    r = mu / (vf - 1.0)
+    p = r / (r + mu)
+    out = [math.exp(math.lgamma(x + r) - math.lgamma(r) - math.lgamma(x + 1)
+                    + r * math.log(p) + x * math.log(1 - p)) for x in range(n)]
+    t = sum(out)
+    return [x / t for x in out]
+
+
+def tail(pmf, line):
+    return sum(p for x, p in enumerate(pmf) if x > line)
+
+
+def lean_pick(rows, need=0.60):
+    """Pilih garis paling dekat 50% yang masih punya kecondongan minimal `need` (garis ekstrem tidak informatif)."""
+    ok = [(max(o, 1 - o), ln, o) for ln, o in rows if max(o, 1 - o) >= need]
+    if not ok:
+        return None
+    lean, ln, o = min(ok)
+    return {"line": ln, "dir": "over" if o >= 0.5 else "under", "p": round(lean, 4)}
+
+
+def corners(xh, xa, lh, la):
+    """Korner tiap tim = rata-rata umum x (gol harapan relatif terhadap liga) ^ 0.45."""
+    clamp = lambda r: max(0.55, min(1.8, r))
+    ch = CORNER_BASE[0] * clamp(xh / lh) ** 0.45
+    ca = CORNER_BASE[1] * clamp(xa / la) ** 0.45
+    ph, pa = nb_pmf(ch, 1.25, 30), nb_pmf(ca, 1.25, 30)
+    pt = [0.0] * 60
+    mx = {"h": 0.0, "d": 0.0, "a": 0.0}
+    for i, a in enumerate(ph):
+        for j, b in enumerate(pa):
+            pt[i + j] += a * b
+            mx["h" if i > j else "a" if j > i else "d"] += a * b
+    r4 = lambda x: round(x, 4)
+    ov = [[ln, r4(tail(pt, ln))] for ln in (8.5, 9.5, 10.5, 11.5)]
+    rec = lean_pick(ov)
+    return {"ch": round(ch, 2), "ca": round(ca, 2), "tot": round(ch + ca, 2), "ov": ov,
+            "th": [[x, r4(tail(ph, x))] for x in (3.5, 4.5, 5.5, 6.5)],
+            "ta": [[x, r4(tail(pa, x))] for x in (2.5, 3.5, 4.5, 5.5)],
+            "mx": {k: r4(v) for k, v in mx.items()}, "rec": rec}
+
+
 def markets(g, ph, pa):
-    """Handicap Asia (garis penuh dan setengah) dan Over/Under dari matriks skor."""
-    ah = [[L] + [round(x, 4) for x in cover(g, "h", L)] for L in (-1.5, -1, -0.5, 0, 0.5, 1, 1.5)]
+    """Peluang selisih gol (garis setengah, tanpa hasil imbang) dan total gol dari matriks skor."""
+    ah = [[L] + [round(x, 4) for x in cover(g, "h", L)] for L in (-1.5, -0.5, 0.5, 1.5)]
     over = lambda line: sum(p for i, r in enumerate(g) for j, p in enumerate(r) if i + j > line)
     ou = [[ln, round(over(ln), 4), round(1 - over(ln), 4)] for ln in (1.5, 2.5, 3.5)]
     etg = sum((i + j) * p for i, r in enumerate(g) for j, p in enumerate(r))
-    # Rekomendasi handicap: garis tersulit untuk tim unggulan dengan peluang tembus >= 60%
     fav = "h" if ph >= pa else "a"
     rec_ah = None
-    for L in (-2.5, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5):
+    for L in (-2.5, -1.5, -0.5, 0.5, 1.5):
         w, pu, l = cover(g, fav, L)
         if w + l > 0 and w / (w + l) >= 0.60:
             rec_ah = {"side": fav, "line": L, "p": round(w / (w + l), 4), "push": round(pu, 4)}
             break
-    # Kecenderungan Over/Under: garis dengan kecondongan terkuat, minimal 58%
-    ln, ov = max(((ln, o) for ln, o, _ in ou), key=lambda x: abs(x[1] - 0.5))
-    lean = max(ov, 1 - ov)
-    rec_ou = {"line": ln, "dir": "over" if ov >= 0.5 else "under", "p": round(lean, 4)} if lean >= 0.58 else None
+    rec_ou = lean_pick([[ln, o] for ln, o, _ in ou])
     return {"ah": ah, "ou": ou, "etg": round(etg, 2), "rec": {"ah": rec_ah, "ou": rec_ou}}
 
 
@@ -112,23 +158,24 @@ def finished(ms):
     return sorted(out, key=lambda m: m["utcDate"])
 
 
+def elo_step(R, h, a, gh, ga):
+    rh, ra = R.get(h, 1500.0), R.get(a, 1500.0)
+    e = 1 / (1 + 10 ** (-(rh + HOME_ADV - ra) / 400))
+    s = 1.0 if gh > ga else 0.5 if gh == ga else 0.0
+    d = 20 * (math.log(abs(gh - ga) + 1) + 1) * (s - e)
+    R[h], R[a] = rh + d, ra - d
+
+
 def elo_table(ms):
-    """Rating Elo dari hasil laga musim ini (selisih gol memperbesar perubahan)."""
     R = {}
     for m in finished(ms):
-        h, a = m["homeTeam"]["id"], m["awayTeam"]["id"]
-        gh, ga = m["score"]["fullTime"]["home"], m["score"]["fullTime"]["away"]
-        rh, ra = R.get(h, 1500.0), R.get(a, 1500.0)
-        e = 1 / (1 + 10 ** (-(rh + HOME_ADV - ra) / 400))
-        s = 1.0 if gh > ga else 0.5 if gh == ga else 0.0
-        k = 20 * (math.log(abs(gh - ga) + 1) + 1)
-        d = k * (s - e)
-        R[h], R[a] = rh + d, ra - d
+        ft = m["score"]["fullTime"]
+        elo_step(R, m["homeTeam"]["id"], m["awayTeam"]["id"], ft["home"], ft["away"])
     return R
 
 
 def blend(ph, pd, pa, rh, ra):
-    """Geser peluang menang/kalah ke arah ekspektasi Elo, peluang seri tetap."""
+    """Geser peluang menang/kalah ke arah ekspektasi Elo."""
     e = 1 / (1 + 10 ** (-(rh + HOME_ADV - ra) / 400))
     delta = ELO_W * (e - (ph + 0.5 * pd))
     ph2, pa2 = max(0.01, ph + delta), max(0.01, pa - delta)
@@ -151,6 +198,72 @@ def decide(ph, pd, pa, form_h, form_a):
     return label, reasons
 
 
+def nm(team):
+    return team.get("shortName") or team["name"]
+
+
+def backtest(ms):
+    """Uji mundur: tiap laga selesai diprediksi HANYA dengan data sebelum laga itu, lalu dicocokkan dengan hasil."""
+    R, st, pts, rows = {}, {}, {}, []
+    L = {"h": 0.0, "a": 0.0, "n": 0}
+    new = lambda: {"hf": 0, "ha": 0, "hn": 0, "af": 0, "aa": 0, "an": 0}
+    for m in finished(ms):
+        h, a = m["homeTeam"]["id"], m["awayTeam"]["id"]
+        gh, ga = m["score"]["fullTime"]["home"], m["score"]["fullTime"]["away"]
+        S, T = st.setdefault(h, new()), st.setdefault(a, new())
+        if L["n"] >= 30 and S["hn"] >= 3 and T["an"] >= 3:
+            lh, la = (L["h"] / L["n"]) or 1.5, (L["a"] / L["n"]) or 1.2
+            att_h = shrink((S["hf"] / S["hn"]) / lh, S["hn"])
+            def_h = shrink((S["ha"] / S["hn"]) / la, S["hn"])
+            att_a = shrink((T["af"] / T["an"]) / la, T["an"])
+            def_a = shrink((T["aa"] / T["an"]) / lh, T["an"])
+            xh, xa = lh * att_h * def_a, la * att_a * def_h
+            ph, pd, pa = summarize(grid(xh, xa))[:3]
+            ph, pd, pa = blend(ph, pd, pa, R.get(h, 1500.0), R.get(a, 1500.0))
+            xh, xa = fit_supremacy(xh, xa, ph)
+            ph, pd, pa, o25, _, _ = summarize(grid(xh, xa))
+            label, _ = decide(ph, pd, pa, sum(pts.get(h, [])[-5:]), sum(pts.get(a, [])[-5:]))
+            rows.append({"ph": ph, "pd": pd, "pa": pa, "po": o25, "label": label,
+                         "res": "h" if gh > ga else "d" if gh == ga else "a", "tg": gh + ga,
+                         "h": nm(m["homeTeam"]), "a": nm(m["awayTeam"]), "sc": f"{gh}-{ga}", "t": m["utcDate"]})
+        S["hf"] += gh; S["ha"] += ga; S["hn"] += 1
+        T["af"] += ga; T["aa"] += gh; T["an"] += 1
+        L["h"] += gh; L["a"] += ga; L["n"] += 1
+        elo_step(R, h, a, gh, ga)
+        p1, p2 = (3, 0) if gh > ga else (1, 1) if gh == ga else (0, 3)
+        pts.setdefault(h, []).append(p1)
+        pts.setdefault(a, []).append(p2)
+    return rows
+
+
+def accuracy(rows):
+    if not rows:
+        return {"n": 0}
+    hit, brier, ou_hit = 0, 0.0, 0
+    by, bk = {}, {}
+    for r in rows:
+        p = {"h": r["ph"], "d": r["pd"], "a": r["pa"]}
+        pick = max(p, key=p.get)
+        ok = pick == r["res"]
+        hit += ok
+        brier += sum((p[k] - (1.0 if k == r["res"] else 0.0)) ** 2 for k in "hda")
+        b = by.setdefault(r["label"], [0, 0]); b[0] += 1; b[1] += ok
+        key = "hi" if p[pick] >= 0.65 else "mid" if p[pick] >= 0.5 else "lo"
+        c = bk.setdefault(key, [0, 0, 0.0]); c[0] += 1; c[1] += ok; c[2] += p[pick]
+        ou_hit += (r["po"] >= 0.5) == (r["tg"] > 2)
+    recent = []
+    for r in sorted(rows, key=lambda r: r["t"], reverse=True)[:12]:
+        p = {"h": r["ph"], "d": r["pd"], "a": r["pa"]}
+        pick = max(p, key=p.get)
+        recent.append({"h": r["h"], "a": r["a"], "sc": r["sc"], "pick": pick, "res": r["res"],
+                       "ok": pick == r["res"], "t": r["t"]})
+    n = len(rows)
+    return {"n": n, "hit": hit / n, "brier": brier / n, "base": 2 / 3,
+            "by": {k: {"n": v[0], "hit": v[1] / v[0]} for k, v in by.items()},
+            "bk": {k: {"n": v[0], "hit": v[1] / v[0], "avg": v[2] / v[0]} for k, v in bk.items()},
+            "ou": {"n": n, "hit": ou_hit / n}, "recent": recent}
+
+
 def analyse(code, name):
     st = get(f"/competitions/{code}/standings")["standings"]
     tab = {s["type"]: {t["team"]["id"]: t for t in s["table"]} for s in st}
@@ -163,6 +276,7 @@ def analyse(code, name):
 
     ms = get(f"/competitions/{code}/matches")["matches"]
     elo = elo_table(ms)
+    bt = backtest(ms)
     pts, done = {}, {}
     for m in finished(ms):
         gh, ga = m["score"]["fullTime"]["home"], m["score"]["fullTime"]["away"]
@@ -201,12 +315,12 @@ def analyse(code, name):
         label, why = decide(ph, pd, pa, form(hid), form(aid))
         why.append(f"rating Elo {round(rh)} vs {round(ra)}")
         out.append({"id": m["id"], "lg": name, "t": m["utcDate"],
-                    "h": m["homeTeam"].get("shortName") or m["homeTeam"]["name"],
-                    "a": m["awayTeam"].get("shortName") or m["awayTeam"]["name"],
+                    "h": nm(m["homeTeam"]), "a": nm(m["awayTeam"]),
                     "ph": ph, "pd": pd, "pa": pa, "o25": o25, "btts": btts, "sc": sc,
                     "xh": xh, "xa": xa, "fh": form(hid), "fa": form(aid),
-                    "eh": round(rh), "ea": round(ra), "label": label, "why": why, **mk})
-    return out, done
+                    "eh": round(rh), "ea": round(ra), "label": label, "why": why,
+                    "cr": corners(xh, xa, lh, la), **mk})
+    return out, done, bt
 
 
 def load_hist():
@@ -218,7 +332,7 @@ def load_hist():
 
 
 def update_hist(hist, upcoming, done, now):
-    # Simpan prediksi hanya selama laga belum dimulai, supaya tidak "mengintip" hasil.
+    """Arsip prediksi live (dibekukan saat kickoff). Dipertahankan agar riwayat tetap tersimpan."""
     for u in upcoming:
         kick = dt.datetime.fromisoformat(u["t"].replace("Z", "+00:00"))
         if now < kick:
@@ -228,40 +342,14 @@ def update_hist(hist, upcoming, done, now):
             h["res"], h["sc"] = done[k]
 
 
-def accuracy(hist):
-    rows = [h for h in hist.values() if "res" in h]
-    if not rows:
-        return {"n": 0}
-    hit, brier = 0, 0.0
-    by, bk, recent = {}, {}, []
-    for h in rows:
-        p = {"h": h["ph"], "d": h["pd"], "a": h["pa"]}
-        pick = max(p, key=p.get)
-        ok = pick == h["res"]
-        hit += ok
-        brier += sum((p[k] - (1.0 if k == h["res"] else 0.0)) ** 2 for k in "hda")
-        b = by.setdefault(h["label"], [0, 0]); b[0] += 1; b[1] += ok
-        key = "hi" if p[pick] >= 0.65 else "mid" if p[pick] >= 0.5 else "lo"
-        c = bk.setdefault(key, [0, 0, 0.0]); c[0] += 1; c[1] += ok; c[2] += p[pick]
-    for h in sorted(rows, key=lambda h: h["t"], reverse=True)[:12]:
-        p = {"h": h["ph"], "d": h["pd"], "a": h["pa"]}
-        pick = max(p, key=p.get)
-        recent.append({"h": h["h"], "a": h["a"], "sc": h.get("sc", ""), "pick": pick,
-                       "res": h["res"], "ok": pick == h["res"], "t": h["t"]})
-    n = len(rows)
-    return {"n": n, "hit": hit / n, "brier": brier / n, "base": 2 / 3,
-            "by": {k: {"n": v[0], "hit": v[1] / v[0]} for k, v in by.items()},
-            "bk": {k: {"n": v[0], "hit": v[1] / v[0], "avg": v[2] / v[0]} for k, v in bk.items()},
-            "recent": recent}
-
-
 def main():
-    hist, data, done, errs = load_hist(), [], {}, 0
+    hist, data, done, bt, errs = load_hist(), [], {}, [], 0
     for code, name in LEAGUES.items():
         try:
-            up, dn = analyse(code, name)
+            up, dn, b = analyse(code, name)
             data += up
             done.update(dn)
+            bt += b
         except Exception as e:
             errs += 1
             print("Gagal", code, e)
@@ -272,7 +360,7 @@ def main():
     with open(HIST, "w", encoding="utf-8") as f:
         json.dump(hist, f, ensure_ascii=False)
     data.sort(key=lambda x: x["t"])
-    acc = accuracy(hist)
+    acc = accuracy(bt)
 
     tpl = open("template.html", encoding="utf-8").read()
     upd = dt.datetime.now(dt.timezone(dt.timedelta(hours=7))).strftime("%d %b %Y %H:%M WIB")
@@ -280,7 +368,7 @@ def main():
     html = tpl.replace("__DATA__", esc(data)).replace("__ACC__", esc(acc)).replace("__UPDATED__", upd)
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html)
-    print("Selesai:", len(data), "pertandingan,", acc.get("n", 0), "hasil terlacak")
+    print("Selesai:", len(data), "pertandingan,", acc.get("n", 0), "laga uji mundur,", errs, "liga gagal")
 
 
 if __name__ == "__main__":
