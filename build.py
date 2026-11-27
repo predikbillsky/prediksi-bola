@@ -1,4 +1,4 @@
-import os, sys, json, math, time, datetime as dt, requests
+import os, sys, re, json, math, time, datetime as dt, requests
 
 KEY = os.environ.get("FD_API_KEY", "")
 BASE = "https://api.football-data.org/v4"
@@ -264,6 +264,179 @@ def accuracy(rows):
             "ou": {"n": n, "hit": ou_hit / n}, "recent": recent}
 
 
+
+# ---------- Statistik tim, pola, dan insight ----------
+def team_stats(ms):
+    seq = {}
+    for m in finished(ms):
+        h, a = m["homeTeam"]["id"], m["awayTeam"]["id"]
+        gh, ga = m["score"]["fullTime"]["home"], m["score"]["fullTime"]["away"]
+        seq.setdefault(h, []).append(("H", gh, ga))
+        seq.setdefault(a, []).append(("A", ga, gh))
+    pt = {"W": 3, "D": 1, "L": 0}
+    S = {}
+    for t, L in seq.items():
+        rs = ["W" if gf > ga else "D" if gf == ga else "L" for _, gf, ga in L]
+
+        def split(v):
+            X = [x for x in L if x[0] == v]
+            w = sum(1 for _, gf, ga in X if gf > ga)
+            d = sum(1 for _, gf, ga in X if gf == ga)
+            return {"n": len(X), "w": w, "d": d, "l": len(X) - w - d,
+                    "gf": sum(x[1] for x in X), "ga": sum(x[2] for x in X)}
+
+        def streak(cond):
+            c = 0
+            for _, gf, ga in reversed(L):
+                if not cond(gf, ga):
+                    break
+                c += 1
+            return c
+
+        S[t] = {"n": len(L), "w": rs.count("W"), "d": rs.count("D"), "l": rs.count("L"),
+                "gf": sum(x[1] for x in L), "ga": sum(x[2] for x in L),
+                "cs": sum(1 for _, gf, ga in L if ga == 0), "fts": sum(1 for _, gf, ga in L if gf == 0),
+                "btts": sum(1 for _, gf, ga in L if gf > 0 and ga > 0),
+                "o25": sum(1 for _, gf, ga in L if gf + ga > 2),
+                "form": "".join(rs[-10:]), "p5": sum(pt[r] for r in rs[-5:]),
+                "home": split("H"), "away": split("A"),
+                "st": {"win": streak(lambda f, g: f > g), "unb": streak(lambda f, g: f >= g),
+                       "los": streak(lambda f, g: f < g), "wl": streak(lambda f, g: f <= g)}}
+    return S
+
+
+def patterns(name, s):
+    P, st, n = [], s["st"], s["n"]
+    if n < 4:
+        return P
+    if st["win"] >= 3: P.append(f"{name} menang {st['win']} laga beruntun.")
+    elif st["unb"] >= 5: P.append(f"{name} tidak terkalahkan dalam {st['unb']} laga terakhir.")
+    if st["los"] >= 3: P.append(f"{name} kalah {st['los']} laga beruntun.")
+    elif st["wl"] >= 5: P.append(f"{name} belum menang dalam {st['wl']} laga terakhir.")
+    h, a = s["home"], s["away"]
+    if h["n"] >= 4 and a["n"] >= 4:
+        hp, ap = (3 * h["w"] + h["d"]) / h["n"], (3 * a["w"] + a["d"]) / a["n"]
+        if hp - ap >= 1.0: P.append(f"{name} jauh lebih kuat di kandang ({hp:.1f} poin per laga) dibanding tandang ({ap:.1f}).")
+        elif ap - hp >= 0.5: P.append(f"{name} justru lebih baik di tandang ({ap:.1f} poin per laga) dibanding kandang ({hp:.1f}).")
+    r = lambda k: s[k] / n
+    if r("o25") >= 0.65: P.append(f"{round(r('o25') * 100)}% laga {name} berakhir dengan 3 gol atau lebih.")
+    elif r("o25") <= 0.30: P.append(f"Hanya {round(r('o25') * 100)}% laga {name} berakhir dengan 3 gol atau lebih, cenderung rapat.")
+    if r("btts") >= 0.65: P.append(f"Kedua tim mencetak gol di {round(r('btts') * 100)}% laga {name}.")
+    if r("cs") >= 0.40: P.append(f"{name} menjaga gawang bersih di {round(r('cs') * 100)}% laga.")
+    if r("fts") >= 0.30: P.append(f"{name} gagal mencetak gol di {round(r('fts') * 100)}% laga.")
+    if n >= 8:
+        sea, f5 = (3 * s["w"] + s["d"]) / n, s["p5"] / 5
+        if f5 - sea >= 0.8: P.append(f"Performa {name} sedang naik: {f5:.1f} poin per laga dalam 5 laga terakhir, di atas rata-rata musim ({sea:.1f}).")
+        elif sea - f5 >= 0.8: P.append(f"Performa {name} sedang turun: {f5:.1f} poin per laga dalam 5 laga terakhir, di bawah rata-rata musim ({sea:.1f}).")
+    return P
+
+
+def match_insight(hn, an, hs, as_, xh, xa, p, elo, etg):
+    out = []
+    if hs and as_ and hs["home"]["n"] >= 3 and as_["away"]["n"] >= 3:
+        h, a = hs["home"], as_["away"]
+        out.append(f"{hn} di kandang: {h['w']}M {h['d']}S {h['l']}K, mencetak {h['gf'] / h['n']:.1f} dan kebobolan {h['ga'] / h['n']:.1f} gol per laga. "
+                   f"{an} di tandang: {a['w']}M {a['d']}S {a['l']}K, mencetak {a['gf'] / a['n']:.1f} dan kebobolan {a['ga'] / a['n']:.1f} gol per laga.")
+        out.append(f"Rata-rata total gol di kandang {hn} adalah {(h['gf'] + h['ga']) / h['n']:.1f} dan di tandang {an} adalah "
+                   f"{(a['gf'] + a['ga']) / a['n']:.1f}. Model memperkirakan {etg:.1f} gol di laga ini.")
+    pats = []
+    for s, n in ((hs, hn), (as_, an)):
+        if s:
+            pats += patterns(n, s)[:2]
+    out += pats[:4]
+    top = max(p)
+    lean = f"{hn} menang" if p[0] == top else f"{an} menang" if p[2] == top else "hasil seri"
+    out.append(f"Model condong ke {lean} ({round(top * 100)}%): selisih gol harapan {xh - xa:+.1f} dan selisih rating Elo {round(elo[0] - elo[1]):+d} untuk tuan rumah.")
+    if (hs and hs["n"] < 8) or (as_ and as_["n"] < 8):
+        out.append("Catatan: data musim ini masih sedikit untuk salah satu tim, jadi pola belum stabil.")
+    return out
+
+
+def comp_summary(ms):
+    F = finished(ms)
+    n = len(F)
+    if not n:
+        return None
+    g = [(m["score"]["fullTime"]["home"], m["score"]["fullTime"]["away"]) for m in F]
+    return {"n": n, "avg": round(sum(a + b for a, b in g) / n, 2),
+            "hw": sum(a > b for a, b in g) / n, "dr": sum(a == b for a, b in g) / n, "aw": sum(a < b for a, b in g) / n,
+            "o25": sum(a + b > 2 for a, b in g) / n, "btts": sum(a > 0 and b > 0 for a, b in g) / n}
+
+
+def comp_insights(S, names):
+    T = [(t, s) for t, s in S.items() if s["n"] >= 5]
+    if len(T) < 4:
+        return []
+    out = []
+    t, s = max(T, key=lambda x: x[1]["gf"] / x[1]["n"])
+    out.append(f"Serangan terbaik: {names[t]} mencetak {s['gf'] / s['n']:.2f} gol per laga.")
+    t, s = min(T, key=lambda x: x[1]["ga"] / x[1]["n"])
+    out.append(f"Pertahanan terbaik: {names[t]} hanya kebobolan {s['ga'] / s['n']:.2f} gol per laga.")
+    t, s = max(T, key=lambda x: x[1]["st"]["unb"])
+    if s["st"]["unb"] >= 4: out.append(f"Rentetan tak terkalahkan terpanjang: {names[t]}, {s['st']['unb']} laga.")
+    t, s = max(T, key=lambda x: x[1]["st"]["win"])
+    if s["st"]["win"] >= 3: out.append(f"Rentetan kemenangan terpanjang: {names[t]}, {s['st']['win']} laga beruntun.")
+    hm = [(t, s) for t, s in T if s["home"]["n"] >= 3]
+    if hm:
+        t, s = max(hm, key=lambda x: (3 * x[1]["home"]["w"] + x[1]["home"]["d"]) / x[1]["home"]["n"])
+        h = s["home"]
+        out.append(f"Paling kuat di kandang: {names[t]} dengan {(3 * h['w'] + h['d']) / h['n']:.1f} poin per laga.")
+    t, s = max(T, key=lambda x: x[1]["o25"] / x[1]["n"])
+    out.append(f"Laga paling banyak gol: {names[t]}, {round(s['o25'] / s['n'] * 100)}% laganya berakhir 3 gol atau lebih.")
+    t, s = max(T, key=lambda x: x[1]["p5"])
+    out.append(f"Form terbaik: {names[t]} meraih {s['p5']} dari 15 poin di 5 laga terakhir.")
+    return out
+
+
+def llm_summary(name, facts):
+    """Opsional: Claude menulis ringkasan dari fakta yang sudah dihitung. Aktif hanya bila INSIGHT_LLM=1."""
+    key = os.environ.get("ANTHROPIC_API_KEY")
+    if not key or os.environ.get("INSIGHT_LLM") != "1" or not facts:
+        return None
+    prompt = ("Kamu analis statistik sepakbola. Dari fakta tentang " + name + " berikut, tulis 4 poin singkat dalam bahasa Indonesia "
+              "yang menjelaskan pola permainan dan artinya. Hanya pakai fakta yang diberikan, jangan mengarang angka, "
+              "jangan menyarankan bertaruh.\n\n" + "\n".join(facts))
+    try:
+        r = requests.post("https://api.anthropic.com/v1/messages",
+                          headers={"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+                          json={"model": os.environ.get("INSIGHT_MODEL", "claude-sonnet-5-5"), "max_tokens": 500,
+                                "messages": [{"role": "user", "content": prompt}]}, timeout=60)
+        r.raise_for_status()
+        return r.json()["content"][0]["text"].strip()
+    except Exception as e:
+        print("Ringkasan AI gagal", name, e)
+        return None
+
+
+def standings_out(st):
+    out = {}
+    for s in st:
+        rows = out.setdefault(s["type"], [])
+        for t in s["table"]:
+            rows.append({"pos": t["position"], "id": str(t["team"]["id"]), "name": nm(t["team"]),
+                         "m": t["playedGames"], "w": t["won"], "d": t["draw"], "l": t["lost"],
+                         "gf": t["goalsFor"], "ga": t["goalsAgainst"],
+                         "gd": t.get("goalDifference", t["goalsFor"] - t["goalsAgainst"]), "pts": t["points"]})
+    return out
+
+
+# ---------- Supabase ----------
+def sb_headers():
+    k = os.environ.get("SUPABASE_SERVICE_KEY", "")
+    return {"apikey": k, "Authorization": "Bearer " + k, "Content-Type": "application/json"}
+
+
+def sb_ready():
+    return bool(os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SERVICE_KEY"))
+
+
+def sb_put(key, data):
+    url = os.environ["SUPABASE_URL"].rstrip("/") + "/rest/v1/snapshots?on_conflict=key"
+    body = json.dumps({"key": key, "data": data, "updated_at": dt.datetime.now(dt.timezone.utc).isoformat()})
+    r = requests.post(url, headers={**sb_headers(), "Prefer": "resolution=merge-duplicates"}, data=body, timeout=90)
+    r.raise_for_status()
+
+
 def analyse(code, name):
     st = get(f"/competitions/{code}/standings")["standings"]
     tab = {s["type"]: {t["team"]["id"]: t for t in s["table"]} for s in st}
@@ -275,8 +448,23 @@ def analyse(code, name):
     la = sum(t["goalsFor"] for t in away.values()) / gp(away) or 1.2
 
     ms = get(f"/competitions/{code}/matches")["matches"]
+    try:
+        scorers = [{"p": x["player"]["name"], "t": nm(x["team"]), "g": x.get("goals") or 0,
+                    "a": x.get("assists") or 0, "n": x.get("playedMatches") or 0}
+                   for x in get(f"/competitions/{code}/scorers?limit=10")["scorers"]]
+    except Exception as e:
+        print("Pencetak gol tidak tersedia", code, e)
+        scorers = []
     elo = elo_table(ms)
     bt = backtest(ms)
+    S = team_stats(ms)
+    names = {}
+    for tb in tab.values():
+        for tid, t in tb.items():
+            names[tid] = nm(t["team"])
+    for m in ms:
+        for k in ("homeTeam", "awayTeam"):
+            names.setdefault(m[k]["id"], nm(m[k]))
     pts, done = {}, {}
     for m in finished(ms):
         gh, ga = m["score"]["fullTime"]["home"], m["score"]["fullTime"]["away"]
@@ -314,13 +502,21 @@ def analyse(code, name):
         mk = markets(g, ph, pa)
         label, why = decide(ph, pd, pa, form(hid), form(aid))
         why.append(f"rating Elo {round(rh)} vs {round(ra)}")
+        ins = match_insight(names[hid], names[aid], S.get(hid), S.get(aid), xh, xa, (ph, pd, pa), (rh, ra), mk["etg"])
         out.append({"id": m["id"], "lg": name, "t": m["utcDate"],
                     "h": nm(m["homeTeam"]), "a": nm(m["awayTeam"]),
                     "ph": ph, "pd": pd, "pa": pa, "o25": o25, "btts": btts, "sc": sc,
                     "xh": xh, "xa": xa, "fh": form(hid), "fa": form(aid),
                     "eh": round(rh), "ea": round(ra), "label": label, "why": why,
-                    "cr": corners(xh, xa, lh, la), **mk})
-    return out, done, bt
+                    "cr": corners(xh, xa, lh, la), "ins": ins,
+                    "hid": hid, "aid": aid, **mk})
+    ci = comp_insights(S, names)
+    comp = {"table": standings_out(st), "sum": comp_summary(ms), "ins": ci, "scorers": scorers,
+            "teams": {str(t): {"name": names.get(t, "?"), **s, "pat": patterns(names.get(t, "?"), s)} for t, s in S.items()}}
+    ai = llm_summary(name, ci + [f"Rata-rata gol per laga: {comp['sum']['avg']}"] if comp["sum"] else ci)
+    if ai:
+        comp["ai"] = ai
+    return out, done, bt, comp
 
 
 def load_hist():
@@ -343,32 +539,41 @@ def update_hist(hist, upcoming, done, now):
 
 
 def main():
-    hist, data, done, bt, errs = load_hist(), [], {}, [], 0
+    hist, data, done, bt, comps, errs = load_hist(), [], {}, [], {}, 0
     for code, name in LEAGUES.items():
         try:
-            up, dn, b = analyse(code, name)
+            up, dn, b, comp = analyse(code, name)
             data += up
             done.update(dn)
             bt += b
+            comps[name] = comp
         except Exception as e:
             errs += 1
             print("Gagal", code, e)
     if errs == len(LEAGUES):
-        sys.exit(1)  # jangan timpa halaman lama dengan halaman kosong
+        sys.exit(1)  # jangan menimpa data lama dengan data kosong
     now = dt.datetime.now(dt.timezone.utc)
     update_hist(hist, data, done, now)
     with open(HIST, "w", encoding="utf-8") as f:
         json.dump(hist, f, ensure_ascii=False)
     data.sort(key=lambda x: x["t"])
-    acc = accuracy(bt)
+    upd = dt.datetime.now(dt.timezone(dt.timedelta(hours=7))).strftime("%d %b %Y %H:%M WIB")
+    comps["_order"] = [n for n in LEAGUES.values() if n in comps]
+    snaps = {"matches": {"d": data, "acc": accuracy(bt), "upd": upd}, "competitions": comps}
+    if sb_ready():
+        for k, v in snaps.items():
+            sb_put(k, v)
+        print("Data terkirim ke Supabase:", ", ".join(snaps))
+    else:
+        with open("snapshot.json", "w", encoding="utf-8") as f:
+            json.dump(snaps, f, ensure_ascii=False)
+        print("PERINGATAN: SUPABASE_URL/SUPABASE_SERVICE_KEY belum diatur; data ditulis ke snapshot.json saja")
 
     tpl = open("template.html", encoding="utf-8").read()
-    upd = dt.datetime.now(dt.timezone(dt.timedelta(hours=7))).strftime("%d %b %Y %H:%M WIB")
-    esc = lambda o: json.dumps(o).replace("</", "<\\/")
-    html = tpl.replace("__DATA__", esc(data)).replace("__ACC__", esc(acc)).replace("__UPDATED__", upd)
+    html = tpl.replace("__SB_URL__", os.environ.get("SUPABASE_URL", "")).replace("__SB_KEY__", os.environ.get("SUPABASE_ANON_KEY", ""))
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html)
-    print("Selesai:", len(data), "pertandingan,", acc.get("n", 0), "laga uji mundur,", errs, "liga gagal")
+    print("Selesai:", len(data), "pertandingan,", len(comps) - 1, "kompetisi,", accuracy(bt).get("n", 0), "laga uji mundur,", errs, "liga gagal")
 
 
 if __name__ == "__main__":

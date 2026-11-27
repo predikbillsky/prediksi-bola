@@ -127,6 +127,29 @@ svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke
 .rc .nt{font-size:13px;color:var(--mu);margin-top:2px}
 .brand{display:flex;align-items:center;gap:12px;min-width:0}
 .brand img{height:40px;width:auto;border-radius:8px;flex:none}
+#ov2{z-index:45}
+.auth{position:fixed;inset:0;z-index:90;background:var(--bg);overflow:auto;display:flex;align-items:center;justify-content:center;padding:20px}
+.ac{width:min(100%,400px);text-align:center}
+.alogo{width:min(70%,260px);height:auto;border-radius:16px;margin-bottom:8px}
+.at{font-size:22px;margin:6px 0 14px}.ap{color:var(--mu);margin:0 0 16px}
+.fi{width:100%;padding:14px;margin-bottom:10px;border:1.5px solid var(--ln);border-radius:14px;background:var(--bg);color:var(--ink);font:inherit}
+.am{font-size:14px;margin:4px 0 12px;padding:10px 12px;border-radius:12px;background:var(--ams,#fcefd3);color:#8a5a05;text-align:left}.am.off{display:none}
+.lnk{border:0;background:none;color:var(--mu);text-decoration:underline;font:inherit;padding:14px 8px;cursor:pointer}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th{color:var(--mu);font-weight:600;font-size:12px;text-align:right;padding:6px 4px}
+.tbl td{padding:10px 4px;border-bottom:1px solid var(--ln);text-align:right;white-space:nowrap}
+.tbl th:nth-child(2),.tbl td:nth-child(2){text-align:left;white-space:normal;width:100%}
+.tbl tr[tabindex]{cursor:pointer}
+.tw{overflow-x:auto;margin:0 18px}
+.fd{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:3px;background:var(--dr)}
+.fd.W{background:var(--gr)}.fd.L{background:var(--rd)}
+.sbtn{border:1px solid var(--ln);background:transparent;border-radius:10px;padding:9px 12px;font-weight:600;font-size:13px;margin:6px 6px 0 0}
+.sbtn.p{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.ub{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.ub b{font-size:16px}.ub small{display:block;color:var(--mu);font-size:12.5px}
+.st-pill{flex:none;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700}
+.insl{margin:6px 0 0;padding-left:18px;color:var(--mu);font-size:14px}
+.insl li{margin:4px 0}
 .foot{margin:18px;font-size:12px;color:var(--mu)}
 @media (prefers-reduced-motion:no-preference){.ov-in{animation:up .28s ease-out}@keyframes up{from{opacity:0;transform:translateY(24px)}}.chip,.oc{transition:background .15s,color .15s}}
 </style>
@@ -137,22 +160,28 @@ svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke
 <nav class="nav" id="nav" aria-label="Menu utama"></nav>
 <div class="ov" id="ov" hidden></div>
 <div id="shh"></div>
+<div class="ov" id="ov2" hidden></div>
+<div class="auth" id="auth" hidden></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
-const D=__DATA__,ACC=__ACC__,UPD="__UPDATED__";
+let D=[],ACC={n:0},UPD="",COMP={},CORD=[],ME=null,PEND=0,SB=null;
+const SB_URL="__SB_URL__",SB_KEY="__SB_KEY__",LOGO_SRC=document.querySelector("#spl img").src;
+let cc=null,ct="TOTAL",icc=null,adf="pending",adq="";
 const $=s=>document.querySelector(s);
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
-const IC={home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',heart:'<path d="M12 21s-7-4.6-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.4-9.5 9-9.5 9z"/>',tick:'<path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4z"/><path d="M14 7v10" stroke-dasharray="2 2"/>',back:'<path d="M15 5l-7 7 7 7"/>',search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',filt:'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',ball:'<circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 5h-5L8 10z"/>',goal:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/>',up:'<path d="M5 17l5-5 4 4 5-8"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',share:'<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/>'};
+const IC={home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',heart:'<path d="M12 21s-7-4.6-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.4-9.5 9-9.5 9z"/>',tick:'<path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4z"/><path d="M14 7v10" stroke-dasharray="2 2"/>',back:'<path d="M15 5l-7 7 7 7"/>',search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',filt:'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',ball:'<circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 5h-5L8 10z"/>',goal:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/>',trophy:'<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>',bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',up:'<path d="M5 17l5-5 4 4 5-8"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',share:'<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/>'};
 const ic=n=>{const s=document.createElementNS("http://www.w3.org/2000/svg","svg");s.setAttribute("viewBox","0 0 24 24");s.innerHTML=IC[n];return s};
 const pc=x=>Math.round(x*100);
 const WIB={timeZone:"Asia/Jakarta"};
 const dk=d=>d.toLocaleDateString("en-CA",WIB);
 const todayK=dk(new Date()),tomK=dk(new Date(Date.now()+864e5));
 const GR={"Premier League":["#3d1a78","#9650e0"],"La Liga":["#b3261e","#f59a4a"],"Serie A":["#0b4fa8","#3aa0e8"],"Bundesliga":["#8c1d1d","#e8603f"],"Ligue 1":["#0c5a4a","#35bd92"],"Liga Champions":["#0b1f5c","#3a6be8"],"Championship":["#1e3c72","#5a86d6"],"Eredivisie":["#b8470a","#f59a3a"],"Primeira Liga":["#0b6b3a","#46c27d"],"Brasileirão":["#9a7412","#e6c34b"]};
-const BY={};
+let BY={};
+function prep(){BY={};
 D.forEach((m,i)=>{m.key=m.t+m.h+m.a;BY[m.key]=m;m.d=new Date(m.t);m.dk=dk(m.d);
-  const o=[["h",m.ph],["d",m.pd],["a",m.pa]].sort((x,y)=>y[1]-x[1])[0];m.best=o[0];m.mx=o[1]});
+  const o=[["h",m.ph],["d",m.pd],["a",m.pa]].sort((x,y)=>y[1]-x[1])[0];m.best=o[0];m.mx=o[1]});}
 const pr=(m,k)=>k==="h"?m.ph:k==="a"?m.pa:m.pd;
 const nm=(m,k)=>k==="h"?m.h+" menang":k==="a"?m.a+" menang":"Seri";
 const tm=m=>m.d.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",hour12:false,...WIB}).replace(".",":");
@@ -228,6 +257,10 @@ function view(){const v=$("#view");v.replaceChildren();
     v.appendChild(hdr("Favorit","Laga yang Anda simpan"));
     const L=D.filter(m=>favs.has(m.key)).sort((a,b)=>a.d-b.d);
     if(L.length)v.appendChild(days(L));else v.appendChild(empty("Belum ada favorit. Ketuk ikon hati pada laga yang ingin Anda pantau.","Cari laga",()=>{tab="home";render()}));
+  }else if(tab==="comp"){compView(v)
+  }else if(tab==="ins"){insView(v)
+  }else if(tab==="more"){moreView(v)
+  }else if(tab==="adm"){admView(v)
   }else accView(v);
   v.appendChild(el("p","foot","Diperbarui "+UPD+". Peluang adalah perkiraan statistik, bukan jaminan hasil. Aplikasi ini hanya menyajikan analisis statistik sepakbola, bukan ajakan atau saran bertaruh. Perjudian ilegal di Indonesia."));
   if($("#dyn"))refresh();
@@ -251,9 +284,164 @@ function accView(v){v.appendChild(hdr("Akurasi","Uji mundur musim ini, tanpa men
     t.append(el("b",0,x.h+" "+x.sc.replace("-"," - ")+" "+x.a),el("small",0,"Tebakan: "+pk));
     r.append(t,el("span","pill "+(x.ok?"p-Prioritas":"p-Hindari"),x.ok?"Benar":"Salah"));box.appendChild(r)});
   v.appendChild(box)}
+
+const fmtD=x=>new Date(x).toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"});
+const fdots=x=>{const d=el("span");[...x].forEach(c=>d.appendChild(el("span","fd "+c)));return d};
+function bars2(w,title,rows,cap){const b=el("div","sim");b.appendChild(el("h3",0,title));
+  rows.forEach(([l,p])=>{const r=el("div","br"),bar=el("div"),f=el("div");f.style.width=Math.min(100,p*100)+"%";bar.appendChild(f);r.append(el("span",0,l),bar,el("span",0,pc(p)+"%"));b.appendChild(r)});
+  if(cap)b.appendChild(el("p","cap",cap));w.appendChild(b)}
+function card2(w,title,lines,note){const c=el("div","rc");c.appendChild(el("small",0,title));
+  if(lines.length){const u=el("ul","insl");lines.forEach(x=>u.appendChild(el("li",0,x)));c.appendChild(u)}
+  if(note)c.appendChild(el("div","nt",note));w.appendChild(c)}
+function compChips(v,cur,fn){const r=el("div","rw");CORD.forEach(n=>{const b=el("button","chip",n);b.setAttribute("aria-pressed",cur===n);b.onclick=()=>fn(n);r.appendChild(b)});v.appendChild(r)}
+
+function compView(v){v.appendChild(hdr("Kompetisi","Klasemen dan statistik tim"));
+  if(!CORD.length){v.appendChild(empty("Data kompetisi belum tersedia."));return}
+  if(!cc||!COMP[cc])cc=CORD[0];
+  compChips(v,cc,n=>{cc=n;ct="TOTAL";render()});
+  const c=COMP[cc];
+  if(c.sum){const s=c.sum,g=el("div","sg");[["ball","Rata-rata gol",s.avg.toFixed(2)],["up","3+ gol",pc(s.o25)+"%"],["goal","Kedua tim cetak gol",pc(s.btts)+"%"],["home","Kandang / seri / tandang",pc(s.hw)+" / "+pc(s.dr)+" / "+pc(s.aw)]].forEach(([i,a,b])=>{const d=el("div","sc"),t=el("div");t.append(a,Object.assign(el("b"),{textContent:b}));d.append(ic(i),t);g.appendChild(d)});v.appendChild(g)}
+  const tg=el("div","rw");[["TOTAL","Total"],["HOME","Kandang"],["AWAY","Tandang"]].filter(([k])=>c.table[k]).forEach(([k,l])=>{const b=el("button","chip",l);b.setAttribute("aria-pressed",ct===k);b.onclick=()=>{ct=k;render()};tg.appendChild(b)});v.appendChild(tg);
+  const rows=c.table[ct]||c.table.TOTAL||[];
+  if(!rows.length)v.appendChild(empty("Klasemen belum tersedia untuk kompetisi ini."));
+  else{const tb=el("table","tbl"),th=el("tr");["#","Tim","M","SG","Poin","Form"].forEach(x=>th.appendChild(el("th",0,x)));tb.appendChild(th);
+    rows.forEach(t=>{const tr=el("tr"),st=c.teams[t.id],pt=el("td"),fm=el("td");pt.appendChild(el("b",0,String(t.pts)));if(st)fm.appendChild(fdots(st.form.slice(-5)));
+      tr.append(el("td",0,String(t.pos)),el("td",0,t.name),el("td",0,String(t.m)),el("td",0,(t.gd>0?"+":"")+t.gd),pt,fm);
+      tr.tabIndex=0;tr.onclick=()=>teamSheet(cc,t.id);tr.onkeydown=e=>{if(e.key==="Enter")teamSheet(cc,t.id)};tb.appendChild(tr)});
+    const w=el("div","tw");w.appendChild(tb);v.appendChild(w);v.appendChild(el("p","cap","Ketuk nama tim untuk melihat statistik lengkapnya. M = main, SG = selisih gol."))}
+  const ex=c.scorers;
+  const h=el("div","st");h.appendChild(el("h2",0,"Pencetak gol terbanyak"));v.appendChild(h);
+  if(ex&&ex.length){const bx=el("div","lst");ex.forEach((x,i)=>{const r=el("div","row"),t=el("div","tx");t.append(el("b",0,(i+1)+". "+x.p),el("small",0,x.t+", "+x.n+" laga, "+x.a+" assist"));r.append(t,el("span","pill",x.g+" gol"));bx.appendChild(r)});v.appendChild(bx)}
+  else v.appendChild(empty("Data pencetak gol belum tersedia untuk kompetisi ini."));
+  if(c.ins&&c.ins.length){const h2=el("div","st");h2.appendChild(el("h2",0,"Pola kompetisi"));v.appendChild(h2);card2(v,"Dihitung dari hasil laga musim ini",c.ins)}}
+
+function teamSheet(lg,id){const o=$("#ov2"),c=COMP[lg],t=c&&c.teams[id];if(!t)return;
+  o.hidden=false;o.replaceChildren();const w=el("div","ov-in"),hd=el("div","top");hd.style.justifyContent="flex-start";hd.style.gap="12px";
+  const bk=el("button","xr");bk.appendChild(ic("back"));bk.setAttribute("aria-label","Kembali");bk.onclick=()=>{o.hidden=true;o.replaceChildren()};
+  const t1=el("div");t1.append(el("h1",0,t.name),el("p",0,lg));hd.append(bk,t1);w.appendChild(hd);
+  const g=el("div","sg");g.style.marginTop="14px";
+  [["ball","Main",t.n],["up","Menang-Seri-Kalah",t.w+"-"+t.d+"-"+t.l],["goal","Gol (cetak : kebobolan)",t.gf+" : "+t.ga],["goal","Poin per laga",((3*t.w+t.d)/Math.max(1,t.n)).toFixed(2)]].forEach(([i,a,b])=>{const d=el("div","sc"),x=el("div");x.append(a,Object.assign(el("b"),{textContent:String(b)}));d.append(ic(i),x);g.appendChild(d)});w.appendChild(g);
+  const tb=el("table","tbl"),th=el("tr");["","M","M-S-K","Cetak","Bobol"].forEach(x=>th.appendChild(el("th",0,x)));tb.appendChild(th);
+  [["Kandang",t.home],["Tandang",t.away]].forEach(([l,x])=>{const r=el("tr");r.append(el("td",0,l),el("td",0,String(x.n)),el("td",0,x.w+"-"+x.d+"-"+x.l),el("td",0,x.n?(x.gf/x.n).toFixed(1):"-"),el("td",0,x.n?(x.ga/x.n).toFixed(1):"-"));tb.appendChild(r)});
+  const tw=el("div","tw");tw.style.margin="14px 18px";tw.appendChild(tb);w.appendChild(tw);
+  const n=Math.max(1,t.n);bars2(w,"Pola hasil",[["Gawang bersih",t.cs/n],["Gagal mencetak gol",t.fts/n],["Kedua tim cetak gol",t.btts/n],["3 gol atau lebih",t.o25/n]],"Persentase dari "+t.n+" laga musim ini.");
+  const f=el("div","rc");f.appendChild(el("small",0,"Form 10 laga terakhir (lama ke baru)"));const fr=el("div");fr.style.marginTop="6px";fr.appendChild(fdots(t.form));f.appendChild(fr);
+  f.appendChild(el("div","nt","Rentetan saat ini: menang "+t.st.win+", tak terkalahkan "+t.st.unb+", kalah "+t.st.los+", belum menang "+t.st.wl+"."));w.appendChild(f);
+  if(t.pat&&t.pat.length)card2(w,"Pola yang ditemukan",t.pat);
+  o.appendChild(w);o.scrollTop=0}
+
+function insView(v){v.appendChild(hdr("AI Football Insight","Penjelasan statistik dan pola permainan"));
+  if(!CORD.length){v.appendChild(empty("Data belum tersedia."));return}
+  if(!icc||!COMP[icc])icc=CORD[0];
+  compChips(v,icc,n=>{icc=n;render()});
+  const c=COMP[icc];
+  if(c.ai)card2(v,"Ringkasan AI",[],c.ai);
+  card2(v,"Pola kompetisi",c.ins&&c.ins.length?c.ins:[],c.ins&&c.ins.length?"Dihitung otomatis dari hasil laga musim ini. Bukan saran bertaruh.":"Belum cukup laga untuk menemukan pola.");
+  const L=D.filter(m=>m.lg===icc&&m.ins&&m.ins.length).sort((a,b)=>a.d-b.d).slice(0,8);
+  const h=el("div","st");h.appendChild(el("h2",0,"Insight laga mendatang"));v.appendChild(h);
+  if(!L.length){v.appendChild(empty("Tidak ada laga mendatang dengan insight."));return}
+  const bx=el("div","lst");L.forEach(m=>{const b=el("button","row"),t=el("div","tx");t.append(el("b",0,m.h+" vs "+m.a),el("small",0,tm(m)+" WIB. "+m.ins[m.ins.length>3?2:0].slice(0,110)+"..."));b.append(t,el("span","pill",pc(m.mx)+"%"));b.onclick=()=>openM(m);bx.appendChild(b)});v.appendChild(bx)}
+
+function moreView(v){v.appendChild(hdr("Akun",ME?(ME.nama||ME.email):""));
+  const dA=p=>{if(!p.approved_at)return 0;const e=p.blocked_at?new Date(p.blocked_at):(p.expires_at&&new Date(p.expires_at)<new Date()?new Date(p.expires_at):new Date());return Math.max(0,Math.floor((e-new Date(p.approved_at))/864e5))};
+  const c=el("div","rc");c.style.marginTop="14px";c.appendChild(el("small",0,ME&&ME.role==="admin"?"Admin":"Pengguna"));
+  c.appendChild(el("b",0,ME&&ME.expires_at?"Akses sampai "+fmtD(ME.expires_at):"Akses tanpa batas waktu"));
+  if(ME&&ME.approved_at)c.appendChild(el("div","nt","Sudah aktif "+dA(ME)+" hari sejak "+fmtD(ME.approved_at)+(ME.expires_at?", sisa "+Math.max(0,Math.ceil((new Date(ME.expires_at)-new Date())/864e5))+" hari":"")+"."));
+  v.appendChild(c);
+  const bx=el("div","lst"),item=(t,sub,fn,badge)=>{const b=el("button","row"),x=el("div","tx");x.append(el("b",0,t),el("small",0,sub));b.append(x);if(badge)b.appendChild(el("span","pill p-Hindari",String(badge)));b.onclick=fn;bx.appendChild(b)};
+  item("Favorit","Laga yang Anda simpan",()=>{tab="fav";render()});
+  item("Akurasi model","Uji mundur musim ini",()=>{tab="acc";render()});
+  if(ME&&ME.role==="admin")item("Panel admin","Kelola akses pengguna",()=>{tab="adm";render()},PEND||0);
+  item("Tema: "+TL[theme],"Ketuk untuk mengganti",()=>{theme=theme==="auto"?"dark":theme==="dark"?"light":"auto";applyTheme();render()});
+  item("Keluar","Akhiri sesi di perangkat ini",async()=>{await SB.auth.signOut();location.reload()});
+  v.appendChild(bx)}
+
+const eff=p=>p.status==="approved"?(p.expires_at&&new Date(p.expires_at)<new Date()?"expired":"active"):p.status;
+const daysAcc=p=>{if(!p.approved_at)return 0;const now=new Date(),e=p.blocked_at?new Date(p.blocked_at):(p.expires_at&&new Date(p.expires_at)<now?new Date(p.expires_at):now);return Math.max(0,Math.floor((e-new Date(p.approved_at))/864e5))};
+let ADM=[];
+function admView(v){v.appendChild(hdr("Panel Admin","Kelola akses pengguna"));const box=el("div");v.appendChild(box);box.appendChild(el("p","txt","Memuat..."));loadAdm(box)}
+async function loadAdm(box){const {data,error}=await SB.from("profiles").select("*").order("created_at",{ascending:false});
+  if(error){box.replaceChildren(el("div","vd v-no","Gagal memuat: "+error.message));return}
+  ADM=data;PEND=data.filter(p=>p.status==="pending").length;nav();drawAdm(box)}
+async function act(box,p,kind,days){const now=new Date();let u={};
+  if(kind==="ok"){const base=(p.expires_at&&new Date(p.expires_at)>now&&p.status==="approved")?new Date(p.expires_at):now;u={status:"approved",expires_at:new Date(base.getTime()+days*864e5).toISOString(),blocked_at:null};if(p.status!=="approved")u.approved_at=now.toISOString()}
+  else u={status:"blocked",blocked_at:now.toISOString()};
+  const {error}=await SB.from("profiles").update(u).eq("id",p.id);
+  if(error){toast("Gagal: "+error.message);return}toast("Tersimpan");loadAdm(box)}
+function drawAdm(box){box.replaceChildren();
+  const act7=ADM.filter(p=>eff(p)==="active"),soon=act7.filter(p=>p.expires_at&&(new Date(p.expires_at)-new Date())/864e5<=7);
+  const avg=act7.length?Math.round(act7.reduce((s,p)=>s+daysAcc(p),0)/act7.length):0;
+  const g=el("div","sg");[["user","Total akun",ADM.length],["bulb","Menunggu persetujuan",ADM.filter(p=>p.status==="pending").length],["up","Akses aktif",act7.length],["cal","Berakhir dalam 7 hari",soon.length],["chart","Rata-rata hari akses",avg+" hari"],["goal","Diblokir / kedaluwarsa",ADM.filter(p=>["blocked","expired"].includes(eff(p))).length]].forEach(([i,a,b])=>{const d=el("div","sc"),t=el("div");t.append(a,Object.assign(el("b"),{textContent:String(b)}));d.append(ic(i),t);g.appendChild(d)});box.appendChild(g);
+  const rw=el("div","rw");[["pending","Menunggu"],["active","Aktif"],["expired","Berakhir"],["blocked","Diblokir"],["all","Semua"]].forEach(([k,l])=>{const b=el("button","chip",l);b.setAttribute("aria-pressed",adf===k);b.onclick=()=>{adf=k;drawAdm(box)};rw.appendChild(b)});box.appendChild(rw);
+  const sb=el("div","sb"),i=el("input");i.type="search";i.placeholder="Cari nama atau email";i.value=adq;i.oninput=()=>{adq=i.value;list()};sb.append(ic("search"),i);box.appendChild(sb);
+  const lst=el("div");lst.style.marginTop="12px";box.appendChild(lst);
+  function list(){lst.replaceChildren();const q=adq.toLowerCase();
+    const L=ADM.filter(p=>(adf==="all"||eff(p)===adf)&&(!q||((p.nama||"")+" "+(p.email||"")).toLowerCase().includes(q)));
+    if(!L.length){lst.appendChild(empty("Tidak ada akun pada filter ini."));return}
+    L.forEach(p=>{const e=eff(p),c=el("div","rc"),h=el("div","ub"),t=el("div");
+      t.append(el("b",0,p.nama||"(tanpa nama)"),el("small",0,p.email||""));
+      const pill=el("span","st-pill "+(e==="active"?"p-Prioritas":e==="pending"?"p-Pertimbangkan":"p-Hindari"),e==="active"?"Aktif":e==="pending"?"Menunggu":e==="expired"?"Berakhir":"Diblokir");
+      h.append(t,pill);c.appendChild(h);
+      const info=[];info.push("Daftar "+fmtD(p.created_at));
+      if(p.approved_at)info.push("Hari akses: "+daysAcc(p)+" hari (sejak "+fmtD(p.approved_at)+")");
+      if(p.expires_at)info.push(e==="expired"?"Berakhir "+fmtD(p.expires_at):"Berakhir "+fmtD(p.expires_at)+", sisa "+Math.max(0,Math.ceil((new Date(p.expires_at)-new Date())/864e5))+" hari");
+      else if(p.status==="approved")info.push("Tanpa batas waktu");
+      if(p.role==="admin")info.push("Peran: admin");
+      info.forEach(x=>c.appendChild(el("div","nt",x)));
+      if(p.id!==(ME&&ME.id)){const bt=el("div"),add=(l,fn,pr)=>{const b=el("button","sbtn"+(pr?" p":""),l);b.onclick=fn;bt.appendChild(b)};
+        if(e==="pending"){[7,30,90].forEach((d,k)=>add("Setujui "+d+" hari",()=>act(box,p,"ok",d),k===1));add("Tolak",()=>act(box,p,"block"))}
+        else if(e==="active"){add("+7 hari",()=>act(box,p,"ok",7));add("+30 hari",()=>act(box,p,"ok",30),true);add("Blokir",()=>act(box,p,"block"))}
+        else{add("Aktifkan 30 hari",()=>act(box,p,"ok",30),true);if(e==="expired")add("Blokir",()=>act(box,p,"block"))}
+        c.appendChild(bt)}
+      lst.appendChild(c)})}
+  list()}
+
+function authBox(){const a=$("#auth");a.hidden=false;a.replaceChildren();const c=el("div","ac");a.appendChild(c);return c}
+function logoImg(){const i=el("img","alogo");i.src=LOGO_SRC;i.alt="Match Intelligence";return i}
+function statusScreen(t,x,refresh){const c=authBox();c.append(logoImg(),el("h2","at",t),el("p","ap",x));
+  if(refresh){const b=el("button","btn","Periksa lagi");b.onclick=gate;c.appendChild(b)}
+  const o=el("button","lnk","Keluar");o.onclick=async()=>{if(SB)await SB.auth.signOut();showAuth("login")};c.appendChild(o)}
+function showAuth(mode,msg){const c=authBox(),reg=mode==="reg";c.append(logoImg(),el("h2","at",reg?"Buat akun":"Masuk"));
+  const nama=el("input","fi");nama.placeholder="Nama lengkap";nama.autocomplete="name";
+  const em=el("input","fi");em.type="email";em.placeholder="Email";em.autocomplete="email";
+  const pw=el("input","fi");pw.type="password";pw.placeholder=reg?"Kata sandi (minimal 8 karakter)":"Kata sandi";pw.autocomplete=reg?"new-password":"current-password";
+  const ms=el("div","am"+(msg?"":" off"),msg||""),go=el("button","btn",reg?"Daftar":"Masuk"),sw=el("button","lnk",reg?"Sudah punya akun? Masuk":"Belum punya akun? Daftar");
+  if(reg)c.appendChild(nama);c.append(em,pw,ms,go,sw);
+  if(reg)c.appendChild(el("p","ap","Setelah mendaftar, akses Anda perlu disetujui admin."));
+  const say=t=>{ms.textContent=t;ms.classList.remove("off")};
+  go.onclick=async()=>{go.disabled=true;try{
+    if(reg){if(!em.value.trim())return say("Isi email Anda.");if(pw.value.length<8)return say("Kata sandi minimal 8 karakter.");
+      const {data,error}=await SB.auth.signUp({email:em.value.trim(),password:pw.value,options:{data:{nama:nama.value.trim()}}});
+      if(error)return say(error.message);if(!data.session)return showAuth("login","Akun dibuat. Cek email untuk konfirmasi, lalu masuk.")}
+    else{const {error}=await SB.auth.signInWithPassword({email:em.value.trim(),password:pw.value});if(error)return say("Email atau kata sandi salah.")}
+    gate()}catch(e){say("Terjadi kesalahan: "+e.message)}finally{go.disabled=false}};
+  sw.onclick=()=>showAuth(reg?"login":"reg")}
+async function gate(){const {data:{session}}=await SB.auth.getSession();if(!session)return showAuth("login");
+  const {data:p,error}=await SB.from("profiles").select("*").eq("id",session.user.id).maybeSingle();
+  if(error||!p)return statusScreen("Profil tidak ditemukan","Hubungi admin. "+(error?error.message:""),true);
+  ME=p;
+  if(p.status==="pending")return statusScreen("Menunggu persetujuan","Akun Anda sudah terdaftar. Admin akan mengaktifkan akses Anda. Silakan periksa lagi nanti.",true);
+  if(p.status==="blocked")return statusScreen("Akses dinonaktifkan","Hubungi admin untuk informasi lebih lanjut.",false);
+  if(p.expires_at&&new Date(p.expires_at)<new Date())return statusScreen("Masa akses berakhir","Akses Anda berakhir pada "+fmtD(p.expires_at)+". Hubungi admin untuk perpanjangan.",true);
+  await loadData()}
+async function loadData(){const {data,error}=await SB.from("snapshots").select("key,data");
+  if(error)return statusScreen("Gagal memuat data",error.message,true);
+  const M=Object.fromEntries(data.map(r=>[r.key,r.data]));
+  if(!M.matches)return statusScreen("Data belum tersedia","Pembaruan data belum pernah berjalan. Coba lagi nanti.",true);
+  D=M.matches.d||[];ACC=M.matches.acc||{n:0};UPD=M.matches.upd||"";
+  COMP=M.competitions||{};CORD=COMP._order||Object.keys(COMP).filter(k=>k[0]!=="_");
+  prep();
+  if(ME.role==="admin"){try{const r=await SB.from("profiles").select("id",{count:"exact",head:true}).eq("status","pending");PEND=r.count||0}catch(e){}}
+  $("#auth").hidden=true;tab="home";render()}
+async function start(){
+  if(!window.supabase||!SB_URL||SB_URL.indexOf("__")===0){statusScreen("Konfigurasi belum lengkap","Alamat Supabase belum diisi. Periksa secret di GitHub lalu jalankan update.",false);return}
+  SB=window.supabase.createClient(SB_URL,SB_KEY);
+  SB.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")showAuth("login")});
+  gate()}
 function nav(){const n=$("#nav");n.replaceChildren();
-  [["home","home","Beranda"],["cal","cal","Jadwal"],["fav","heart","Favorit"],["acc","chart","Akurasi"]].forEach(([k,i,l])=>{
-    const b=el("button","nb"+(tab===k?" on":""));b.append(ic(i),el("span",0,l));
+  [["home","home","Beranda"],["cal","cal","Jadwal"],["comp","trophy","Kompetisi"],["ins","bulb","Insight"],["more","user","Akun"]].forEach(([k,i,l])=>{
+    const b=el("button","nb"+(tab===k||(k==="more"&&["fav","acc","adm"].includes(tab))?" on":""));b.append(ic(i),el("span",0,l));
+    if(k==="more"&&ME&&ME.role==="admin"&&PEND>0)b.appendChild(el("span","bg",String(PEND)));
     b.setAttribute("aria-label",l);b.onclick=()=>{det=null;tab=k;render();window.scrollTo(0,0)};n.appendChild(b)})}
 function pois(k,l){let f=1;for(let i=2;i<=k;i++)f*=i;return Math.exp(-l)*Math.pow(l,k)/f}
 function detail(){const o=$("#ov");if(!det){o.hidden=true;o.replaceChildren();return}
@@ -279,6 +467,7 @@ function detail(){const o=$("#ov");if(!det){o.hidden=true;o.replaceChildren();re
     w.appendChild(sg);
     w.appendChild(el("p","txt","Tingkat keyakinan model: "+LB(m.label)+"."));
     const ul=el("ul","why");m.why.forEach(x=>ul.appendChild(el("li",0,x)));w.appendChild(ul);
+    if(m.ins&&m.ins.length){const ic2=el("div","rc");ic2.style.marginTop="14px";ic2.appendChild(el("small",0,"AI Football Insight"));const u2=el("ul","insl");m.ins.forEach(x=>u2.appendChild(el("li",0,x)));ic2.appendChild(u2);w.appendChild(ic2)}
   }else{
     w.appendChild(el("p","txt","Peluang skor akhir menurut model gol. Baris adalah gol "+m.h+", kolom adalah gol "+m.a+"."));
     const hm=el("div","hm");hm.appendChild(el("i"));for(let j=0;j<5;j++)hm.appendChild(el("i",0,String(j)));
@@ -288,6 +477,7 @@ function detail(){const o=$("#ov");if(!det){o.hidden=true;o.replaceChildren();re
     const fm=el("div","fm");[[m.h,m.fh],[m.a,m.fa]].forEach(([n,v])=>{const r=el("div","l");r.append(el("span",0,n),el("b",0,v+" dari 15 poin"));const t=el("div","t"),f=el("div");f.style.width=v/15*100+"%";t.appendChild(f);fm.append(r,t)});
     w.append(el("p","txt","Form 5 laga terakhir"),fm);
     if(m.eh){const em=el("div","fm");[[m.h,m.eh],[m.a,m.ea]].forEach(([n,v])=>{const r=el("div","l");r.append(el("span",0,n),el("b",0,"Elo "+v));const t=el("div","t"),f=el("div");f.style.width=Math.max(5,Math.min(100,(v-1300)/4))+"%";t.appendChild(f);em.append(r,t)});w.append(el("p","txt","Rating Elo (kekuatan relatif tim musim ini)"),em)}
+    if(m.hid&&COMP[m.lg]){const ac=el("div","acts");[[m.h,m.hid],[m.a,m.aid]].forEach(([n,id])=>{const b=el("button","btn lt","Statistik "+n);b.onclick=()=>teamSheet(m.lg,id);ac.appendChild(b)});w.appendChild(ac)}
   }
   const ct=el("div","cta"),cb=el("button","btn","Bagikan analisis");cb.onclick=()=>share(m);ct.appendChild(cb);w.appendChild(ct);o.appendChild(w);o.scrollTop=0}
 const gtx=(d,l)=>d==="over"?Math.ceil(l)+" gol atau lebih":"maksimal "+Math.floor(l)+" gol";
@@ -330,9 +520,9 @@ function sheet(){const s=$("#shh");s.replaceChildren();const b=el("div","sh"),p=
   const ok=el("button","btn","Terapkan");ok.onclick=()=>{s.replaceChildren();render()};
   p.append(r,ok);b.appendChild(p);b.onclick=e=>{if(e.target===b){s.replaceChildren();render()}};s.appendChild(b)}
 function render(){view();nav();detail()}
-render();
 const sp=$("#spl"),hide=()=>sp.classList.add("out");
 try{if(sessionStorage.getItem("seen"))sp.remove();else{sessionStorage.setItem("seen","1");setTimeout(hide,1600)}}catch(e){setTimeout(hide,1600)}
+start();
 sp.onclick=hide;sp.onkeydown=e=>{if(e.key==="Enter")hide()};
 </script>
 </body>

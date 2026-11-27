@@ -1,0 +1,37 @@
+name: update
+on:
+  push:
+    branches: [main]
+    paths: [build.py, template.html]
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: update
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install requests
+      - run: python build.py
+        env:
+          FD_API_KEY: ${{ secrets.FD_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          # Opsional (ringkasan AI memakai Claude). Hapus dua baris di bawah jika tidak dipakai.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          INSIGHT_LLM: ${{ secrets.ANTHROPIC_API_KEY != '' && '1' || '0' }}
+      - run: |
+          git config user.name bot
+          git config user.email bot@example.com
+          git add index.html history.json
+          git commit -m "update" || exit 0
+          git push
