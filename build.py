@@ -1,4 +1,4 @@
-import os, sys, re, json, math, time, datetime as dt, requests
+import os, sys, re, json, math, time, base64, datetime as dt, requests
 
 KEY = os.environ.get("FD_API_KEY", "")
 BASE = "https://api.football-data.org/v4"
@@ -422,8 +422,30 @@ def standings_out(st):
 
 # ---------- Supabase ----------
 def sb_headers():
-    k = os.environ.get("SUPABASE_SERVICE_KEY", "")
+    k = os.environ.get("SUPABASE_SERVICE_KEY", "").strip()
+    if k.startswith("sb_"):  # kunci format baru (sb_secret_...) dikirim lewat header apikey saja
+        return {"apikey": k, "Content-Type": "application/json"}
     return {"apikey": k, "Authorization": "Bearer " + k, "Content-Type": "application/json"}
+
+
+def key_role(k):
+    """Baca peran dari kunci lama (JWT): 'anon' atau 'service_role'. None jika bukan JWT."""
+    try:
+        p = k.split(".")[1]
+        p += "=" * (-len(p) % 4)
+        return json.loads(base64.urlsafe_b64decode(p)).get("role")
+    except Exception:
+        return None
+
+
+def check_keys():
+    k = os.environ.get("SUPABASE_SERVICE_KEY", "").strip()
+    u = os.environ.get("SUPABASE_URL", "").strip()
+    if k.startswith("sb_publishable_") or key_role(k) == "anon":
+        sys.exit("GAGAL: SUPABASE_SERVICE_KEY berisi kunci anon/publishable. Isi dengan kunci service_role "
+                 "(Supabase > Project Settings > API > tab Legacy API keys > service_role).")
+    if u and not u.startswith("https://"):
+        sys.exit("GAGAL: SUPABASE_URL harus diawali https:// (contoh https://abcd.supabase.co)")
 
 
 def sb_ready():
@@ -434,6 +456,8 @@ def sb_put(key, data):
     url = os.environ["SUPABASE_URL"].rstrip("/") + "/rest/v1/snapshots?on_conflict=key"
     body = json.dumps({"key": key, "data": data, "updated_at": dt.datetime.now(dt.timezone.utc).isoformat()})
     r = requests.post(url, headers={**sb_headers(), "Prefer": "resolution=merge-duplicates"}, data=body, timeout=90)
+    if not r.ok:
+        print("Supabase menolak:", r.status_code, r.text[:300])
     r.raise_for_status()
 
 
@@ -561,6 +585,7 @@ def main():
     comps["_order"] = [n for n in LEAGUES.values() if n in comps]
     snaps = {"matches": {"d": data, "acc": accuracy(bt), "upd": upd}, "competitions": comps}
     if sb_ready():
+        check_keys()
         for k, v in snaps.items():
             sb_put(k, v)
         print("Data terkirim ke Supabase:", ", ".join(snaps))
